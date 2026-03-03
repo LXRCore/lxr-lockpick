@@ -1,76 +1,143 @@
-# LXR-Lockpick 🔓
+# 🐺 LXR Lockpick
 
-**LXR-Lockpick** is a dynamic and customizable lockpicking system for the **LXRCore** framework. It brings an immersive lockpicking experience to your RedM server, whether it's cracking safes, picking doors, or unlocking cars, this resource has got you covered!
+```
+██╗     ██╗  ██╗██████╗        ██╗      ██████╗  ██████╗██╗  ██╗██████╗ ██╗ ██████╗██╗  ██╗
+██║     ╚██╗██╔╝██╔══██╗       ██║     ██╔═══██╗██╔════╝██║ ██╔╝██╔══██╗██║██╔════╝██║ ██╔╝
+██║      ╚███╔╝ ██████╔╝ ─────  ██║     ██║   ██║██║     █████╔╝ ██████╔╝██║██║     █████╔╝
+██║      ██╔██╗ ██╔══██╗       ██║     ██║   ██║██║     ██╔═██╗ ██╔═══╝ ██║██║     ██╔═██╗
+███████╗██╔╝ ██╗██║  ██║       ███████╗╚██████╔╝╚██████╗██║  ██╗██║     ██║╚██████╗██║  ██╗
+╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝       ╚══════╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝╚═╝  ╚═╝
+```
+
+**Advanced skill-based lockpicking mini-game for RedM**
+
+| | |
+|---|---|
+| **Server** | The Land of Wolves 🐺 |
+| **Developer** | iBoss21 / The Lux Empire |
+| **Website** | https://www.wolves.land |
+| **Discord** | https://discord.gg/CrKcWdfd3A |
+| **Store** | https://theluxempire.tebex.io |
 
 ---
 
 ## Features ✨
-- **Interactive Lockpicking**: Realistic and skill-based lockpicking mini-game for players.
-- **Customizable Difficulty**: Adjust the difficulty level to fit your server’s needs.
-- **Multi-Purpose**: Supports doors, safes, vehicles, and more!
-- **Failure Consequences**: Optional consequences such as item breakage or alarms.
-- **Integrated with LXRCore**: Seamless integration with LXRCore, making setup a breeze.
+
+- **Interactive Mini-Game** — Skill-based lockpicking with a rotating cylinder and breakable pins.
+- **Multi-Framework Support** — LXR Core (primary), RSG Core (primary), VORP Core, RedEM:RP, QBR-Core, QR-Core, Standalone.
+- **Item Integration** — Optionally require and consume a `lockpick` item from the player's inventory.
+- **Configurable Difficulty** — Adjust pin count, pin health, damage interval, cylinder speed, and sweet-spot size in `config.lua`.
+- **Server-Side Validation** — Item checks and removal happen server-side; no client-side exploits.
+- **Locale Support** — English and Georgian (`ge`) built in; easily extendable.
+- **Resource Name Guard** — Runtime check ensures the folder is named correctly for Tebex escrow compliance.
+
+---
+
+## Framework Support
+
+| Framework | Status |
+|---|---|
+| LXR Core | ✅ Primary |
+| RSG Core | ✅ Primary |
+| VORP Core | ✅ Supported |
+| RedEM:RP | ⚙️ Optional |
+| QBR-Core | ⚙️ Optional |
+| QR-Core | ⚙️ Optional |
+| Standalone | ✅ Fallback |
 
 ---
 
 ## Installation 🛠️
 
-### 1. Download & Install
+### 1. Download & Place
 
-- **Download** the script and place it in your `[lxr]` directory.
+Download the resource and place the folder (named exactly `lxr-lockpick`) inside your `[lxr]` directory.
 
 ### 2. Add to `server.cfg`
 
-Add the following lines to your `server.cfg` to ensure it’s loaded:
-
 ```bash
-ensure lxr-core
+ensure lxr-core        # or your chosen framework
 ensure lxr-lockpick
+```
+
+### 3. Add the lockpick item (optional)
+
+If `Config.Lockpick.item` is set (default: `'lockpick'`), add the item to your inventory resource.
+
+**LXR / RSG example (`items.lua`):**
+```lua
+['lockpick'] = {
+    label    = 'Lockpick',
+    weight   = 100,
+    type     = 'item',
+    image    = 'lockpick.png',
+    unique   = false,
+    useable  = true,
+    shouldClose = true,
+    combinable = nil,
+    description = 'A small tool used to pick locks.',
+},
 ```
 
 ---
 
 ## Configuration ⚙️
 
-You can tweak various options in the `config.lua` file, such as:
-
-- **Lockpicking Difficulty**: Adjust how challenging it is for players to pick locks.
-- **Failure Consequences**: Define what happens when a player fails (e.g., lockpick breaking, alarms triggering).
-- **Supported Objects**: Add or remove objects that can be lockpicked (doors, safes, vehicles, etc.).
-
----
-
-## Example Usage 🚪
-
-Here’s a simple example of how you might use **LXR-Lockpick** in a script:
+All settings live in `config.lua`. Key options:
 
 ```lua
--- Example of lockpicking a door
-local door = GetClosestObjectOfType(playerCoords, 1.5, `prop_door`, false, false, false)
-if door then
-    TriggerEvent('lxr-lockpick:attempt', door)
-end
+Config.Framework = 'auto'        -- or 'lxr-core', 'rsg-core', 'vorp_core', etc.
+
+Config.Lockpick = {
+    item              = 'lockpick', -- inventory item name (set false to disable)
+    removeOnUse       = true,       -- remove on successful open
+    removeOnFailure   = true,       -- remove when pin breaks
+    numPins           = 3,          -- starting pins (fewer = harder)
+    pinHealth         = 100,        -- health per pin
+    pinDamage         = 20,         -- damage per bad push
+    pinDamageInterval = 150,        -- ms between damage events
+    cylRotSpeed       = 3,          -- cylinder rotation speed
+    maxPickRotation   = 90,         -- maximum pick rotation (degrees)
+    maxDistFromSolve  = 45,         -- tolerance before zero cylinder travel
+    solvePadding      = 4,          -- sweet-spot width (degrees)
+    keyRepeatRate     = 25,         -- setInterval ms
+    mouseSmoothing    = 2,          -- mouse sensitivity divisor
+}
+
+Config.Lang = 'en'                -- 'en' | 'ge'
 ```
 
 ---
 
-## Screenshots 📸
-Coming soon! Stay tuned for visuals showcasing the thrilling lockpicking experience.
+## Usage Example 🚪
+
+Trigger the lockpick mini-game from another resource:
+
+```lua
+-- Client-side: request server to validate item then open the UI
+TriggerServerEvent('lxr-lockpick:server:openLockpick')
+
+-- Or, listen for the server-validated open event with a callback:
+AddEventHandler('lxr-lockpick:client:openLockpick', function(callback)
+    -- The server fires this after a successful item check.
+    -- callback will be called with true (success) or false (failure).
+end)
+```
 
 ---
 
-## Roadmap & Future Updates 🚀
-- **Lockpick Crafting**: Add the ability for players to craft lockpicks.
-- **Advanced Security Systems**: For high-value targets, add more sophisticated lock systems with alarms.
-- **Custom Animations**: Immersive lockpicking animations to make the experience even more engaging.
+## Roadmap 🚀
+
+- [ ] Lockpick crafting integration
+- [ ] Advanced alarm systems for high-value targets
+- [ ] Custom RedM animations during picking
 
 ---
 
 ## License 📄
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
-With **LXR-Lockpick**, breaking into places has never been this much fun! Unlock new possibilities for your RedM server and give your players a thrilling challenge!
-
+> © 2026 iBoss21 / The Lux Empire | [wolves.land](https://www.wolves.land) | All Rights Reserved

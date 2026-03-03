@@ -6,8 +6,8 @@
     ███████╗██╔╝ ██╗██║  ██║       ███████╗╚██████╔╝╚██████╗██║  ██╗██║     ██║╚██████╗██║  ██╗
     ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝       ╚══════╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝╚═╝  ╚═╝
 
-    🐺 LXR Lockpick — Client-Side Handler
-    Minigame lifecycle, NUI bridge, and framework-aware notifications.
+    🐺 LXR Lockpick — Server-Side Handler
+    Framework-aware item checks and lockpick consumption.
 
     ═══════════════════════════════════════════════════════════════════════════════
     SERVER INFORMATION
@@ -22,13 +22,11 @@
 ]]
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- 🐺 FRAMEWORK BRIDGE — CLIENT SIDE
+-- 🐺 FRAMEWORK BRIDGE — SERVER SIDE
 -- ═══════════════════════════════════════════════════════════════════════════════
 
-local Framework     = nil
+local Framework = nil
 local frameworkName = nil
-local lockpickCallback = nil
-local lockpicking      = false
 
 local function InitFramework()
     if Config.Framework ~= 'auto' then
@@ -60,88 +58,112 @@ local function InitFramework()
     elseif frameworkName == 'qr-core' then
         Framework = exports['qr-core']:GetCoreObject()
     end
+
+    print(string.format(
+        '^2[lxr-lockpick]^7 🐺 wolves.land | Framework detected: ^3%s^7',
+        frameworkName
+    ))
 end
 
--- ── Notification helper ───────────────────────────────────────────────────────
+-- ── Inventory helpers ─────────────────────────────────────────────────────────
 
-local function Notify(msg, notifyType)
-    notifyType = notifyType or 'inform'
+local function PlayerHasItem(source, itemName)
+    if not Config.Lockpick.item then return true end
 
     if frameworkName == 'lxr-core' or frameworkName == 'rsg-core' then
-        if lib and lib.notify then
-            lib.notify({ title = '🐺 Lockpick', description = msg, type = notifyType })
-        elseif Framework and Framework.Functions and Framework.Functions.Notify then
-            Framework.Functions.Notify(msg, notifyType)
-        end
+        local Player = Framework.Functions.GetPlayer(source)
+        if not Player then return false end
+        local item = Player.Functions.GetItemByName(itemName)
+        return item ~= nil and item.amount > 0
+
     elseif frameworkName == 'vorp_core' then
-        TriggerEvent('vorp:TipRight', msg, 4000)
+        local character = Framework.GetCharacter(source)
+        if not character then return false end
+        return character.getItem(itemName) ~= nil
+
     elseif frameworkName == 'qbr-core' or frameworkName == 'qr-core' then
-        if Framework and Framework.Functions and Framework.Functions.Notify then
-            Framework.Functions.Notify(msg, notifyType)
-        end
+        local Player = Framework.Functions.GetPlayer(source)
+        if not Player then return false end
+        local item = Player.Functions.GetItemByName(itemName)
+        return item ~= nil and item.amount > 0
+
     else
-        -- standalone fallback
-        print(string.format('[lxr-lockpick] %s', msg))
+        -- standalone / redem — no inventory check, always allow
+        return true
     end
 end
 
--- ═══════════════════════════════════════════════════════════════════════════════
--- 🐺 NUI HELPERS
--- ═══════════════════════════════════════════════════════════════════════════════
+local function RemoveItemFromPlayer(source, itemName, amount)
+    if not Config.Lockpick.item then return end
+    amount = amount or 1
 
-local function openLockpick(bool)
-    SetNuiFocus(bool, bool)
-    SendNUIMessage({
-        action = 'ui',
-        toggle = bool,
-    })
-    SetCursorLocation(0.5, 0.2)
-    lockpicking = bool
+    if frameworkName == 'lxr-core' or frameworkName == 'rsg-core' then
+        local Player = Framework.Functions.GetPlayer(source)
+        if Player then
+            Player.Functions.RemoveItem(itemName, amount)
+        end
+
+    elseif frameworkName == 'vorp_core' then
+        local character = Framework.GetCharacter(source)
+        if character then
+            character.removeItem(itemName, amount)
+        end
+
+    elseif frameworkName == 'qbr-core' or frameworkName == 'qr-core' then
+        local Player = Framework.Functions.GetPlayer(source)
+        if Player then
+            Player.Functions.RemoveItem(itemName, amount)
+        end
+    end
+    -- standalone / redem — no-op
 end
 
--- ═══════════════════════════════════════════════════════════════════════════════
--- 🐺 CLIENT EVENTS
--- ═══════════════════════════════════════════════════════════════════════════════
+-- ── Boot ──────────────────────────────────────────────────────────────────────
 
--- Fired by the server after a successful item check.
-AddEventHandler('lxr-lockpick:client:openLockpick', function(callback)
-    lockpickCallback = callback
-    openLockpick(true)
-end)
-
--- Fired by the server to display a notification to the player.
-RegisterNetEvent('lxr-lockpick:client:notify', function(msg, notifyType)
-    Notify(msg, notifyType)
-end)
-
--- ═══════════════════════════════════════════════════════════════════════════════
--- 🐺 NUI CALLBACKS
--- ═══════════════════════════════════════════════════════════════════════════════
-
--- Called by the NUI when the minigame resolves (success or failure).
-RegisterNUICallback('callback', function(data, cb)
-    openLockpick(false)
-    -- Notify server of result so it can handle item removal / logging
-    TriggerServerEvent('lxr-lockpick:server:result', data.success, data.pinBroke or false)
-    if lockpickCallback then
-        lockpickCallback(data.success)
-        lockpickCallback = nil
-    end
-    cb('ok')
-end)
-
--- Called by the NUI when the player presses ESC to exit.
-RegisterNUICallback('exit', function(_, cb)
-    openLockpick(false)
-    cb('ok')
-end)
-
--- ═══════════════════════════════════════════════════════════════════════════════
--- 🐺 BOOT
--- ═══════════════════════════════════════════════════════════════════════════════
-
-AddEventHandler('onClientResourceStart', function(resource)
+AddEventHandler('onResourceStart', function(resource)
     if resource == GetCurrentResourceName() then
         InitFramework()
+    end
+end)
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- 🐺 SERVER EVENTS
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+-- Called by client before opening the lockpick UI.
+-- Validates item ownership and fires the open event back to the requesting
+-- client only if the check passes.
+RegisterNetEvent('lxr-lockpick:server:openLockpick', function()
+    local src = source
+    local locale = Config.Locale[Config.Lang] or Config.Locale['en']
+
+    if Config.Lockpick.item and not PlayerHasItem(src, Config.Lockpick.item) then
+        TriggerClientEvent('lxr-lockpick:client:notify', src, locale.no_lockpick, 'error')
+        return
+    end
+
+    TriggerClientEvent('lxr-lockpick:client:openLockpick', src)
+end)
+
+-- Called by client when the minigame resolves (success or failure).
+RegisterNetEvent('lxr-lockpick:server:result', function(success, pinBroke)
+    local src = source
+    local locale = Config.Locale[Config.Lang] or Config.Locale['en']
+
+    -- Remove lockpick on failure (pin broke) if configured
+    if pinBroke and Config.Lockpick.removeOnFailure then
+        RemoveItemFromPlayer(src, Config.Lockpick.item, 1)
+        TriggerClientEvent('lxr-lockpick:client:notify', src, locale.lockpick_removed, 'error')
+    end
+
+    -- Remove lockpick on successful open if configured
+    if success and Config.Lockpick.removeOnUse then
+        RemoveItemFromPlayer(src, Config.Lockpick.item, 1)
+    end
+
+    if success then
+        TriggerClientEvent('lxr-lockpick:client:notify', src, locale.lockpick_success, 'success')
+    else
+        TriggerClientEvent('lxr-lockpick:client:notify', src, locale.lockpick_failed, 'error')
     end
 end)
