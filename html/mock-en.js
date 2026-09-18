@@ -1,0 +1,1 @@
+window.__LXR_MOCK__ = {"brand":{"theme":"night","name":"The Land of Wolves"},"speed":1,"action":"open","lang":"en","label":"Mock Door","band":0.12,"locale":{"ui.broke":"The pick snapped","ui.hint":"Press SPACE when the pin sits in the red band","ui.done":"The lock gives","ui.title":"Pick the lock"},"pins":4};

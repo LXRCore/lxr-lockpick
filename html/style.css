@@ -97,3 +97,5 @@
 .lxr-pin-row.is-active .lxr-pin-track {
     border: 1px solid var(--lxr-blood-lit);
 }
+.lp-logo { width: 44px; height: 44px; object-fit: contain; background: var(--lxr-void); border: var(--lxr-hairline) solid var(--lxr-edge); border-radius: var(--lxr-radius); padding: 4px; }
+.lxr-pin-row.is-miss .lxr-pin-marker { background: var(--lxr-blood-lit); }
