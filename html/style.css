@@ -1,137 +1,99 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100&display=swap');
+/* ==========================================================================
+   LXR-LOCKPICK — Minigame styles
+   Colours only through kit tokens (var(--lxr-…)). No hex colours here.
+   ========================================================================== */
 
-html, body {
-	 width: 100%;
-	 height: 100%;
-	 padding: 0;
-	 margin: 0;
-	 font-family: 'Poppins', sans-serif;
-}
- body {
-	 display: inline-block;
-	 overflow: hidden;
+/* --- Panel layout ---------------------------------------------------------- */
+
+#panel {
+    max-height: 80vh;
+    overflow-y: auto;
 }
 
-#wrap {
-	 display: none;
-	 position: relative;
-	 width: 12%;
-	 margin: 5% auto;
-	 overflow: visible;
+/* --- Pin rows -------------------------------------------------------------- */
+
+.lxr-pin-row {
+    display: flex;
+    align-items: center;
+    gap: var(--lxr-s3);
+    padding: var(--lxr-s2) 0;
 }
 
-p {
-	 color: #fde470;
-	 color: #2f2;
-	 text-align: center;
-	 font-weight: 400;
-	 font-size: 1.2em;
-	 padding: 0;
-	 margin: 0.5em;
+.lxr-pin-label {
+    flex: none;
+    font-family: var(--lxr-font-code);
+    font-size: var(--lxr-text-micro);
+    letter-spacing: var(--lxr-track-mono);
+    color: var(--lxr-smoke);
+    width: 28px;
+    text-align: right;
 }
- p.disclaimer {
-	 position: absolute;
-	 bottom: 0;
-	 left: 0;
-	 opacity: 0.5;
-	 font-size: 0.9em;
-	 color: #000;
-	 font-weight: 300;
+
+.lxr-pin-track {
+    flex: 1 1 auto;
+    position: relative;
+    height: 6px;
+    background: var(--lxr-edge);
+    border-radius: var(--lxr-radius-pill);
+    overflow: visible;
 }
- #collar {
-	 display: block;
-	 position: relative;
-	 width: 100%;
-	 height: 100%;
+
+/* The red target band. */
+.lxr-pin-band {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background: var(--lxr-blood-lit);
+    border-radius: var(--lxr-radius-pill);
+    opacity: 0.7;
 }
- #cylinder {
-	 display: block;
-	 background: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/95637/cylinder.png');
-	 background-size: cover;
-	 width: 69.914%;
-	 height: 69.914%;
-	 position: absolute;
-	 top: 14.9%;
-	 left: 15%;
+
+/* The moving pin marker. */
+.lxr-pin-marker {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    background: var(--lxr-bone);
+    border-radius: var(--lxr-radius-pill);
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+    transition: none;
+    pointer-events: none;
 }
- #driver {
-	 display: block;
-	 width: 172.1739%;
-	 height: 84%;
-	 background: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/95637/driver.png');
-	 background-size: cover;
-	 position: absolute;
-	 top: 57%;
-	 left: 46%;
-	 transform-origin: 3% -3%;
+
+/* Set pin (success). */
+.lxr-pin-row.is-ok .lxr-pin-marker {
+    background: var(--lxr-ok);
+    box-shadow: 0 0 8px var(--lxr-blood-18);
 }
- #pin {
-	 display: block;
-	 background-size: cover;
-	 width: 7.1304%;
-	 height: 146.4347%;
-	 position: absolute;
-	 left: 47.4%;
-	 top: -98%;
-	 transform-origin: 50% 99%;
+
+.lxr-pin-row.is-ok .lxr-pin-track {
+    background: var(--lxr-edge);
 }
- #pin .top {
-	 display: block;
-	 width: 100%;
-	 height: 50%;
-	 position: absolute;
-	 top: 0;
-	 left: 0;
-	 background: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/95637/pinTop.png');
-	 background-size: cover;
+
+/* Missed pin (try lost). */
+.lxr-pin-row.is-miss .lxr-pin-marker {
+    background: var(--lxr-warn);
 }
- #pin .bott {
-	 display: block;
-	 width: 100%;
-	 height: 50%;
-	 position: absolute;
-	 top: 50%;
-	 left: 0;
-	 background: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/95637/pinBott.png');
-	 background-size: cover;
+
+/* Disabled row (already set or exhausted). */
+.lxr-pin-row.is-done {
+    opacity: 0.5;
 }
- #modal {
-	 display: none;
-	 overflow: auto;
-	 position: fixed;
-	 top: 0;
-	 left: 0;
-	 width: 100%;
-	 height: 100%;
-	 background: rgba(0, 0, 0, 0.8);
-	 text-align: center;
+
+/* --- Status footer --------------------------------------------------------- */
+
+#status {
+    min-width: 160px;
 }
- #modal div {
-	 margin-top: 5%;
-	 display: inline-block;
-	 background: #fff;
-	 border-radius: 20px;
-	 box-sizing: border-box;
-	 padding: 1%;
+
+/* --- Active pin highlight -------------------------------------------------- */
+
+.lxr-pin-row.is-active {
+    opacity: 1;
 }
-#modal div h1 {
-	 margin-bottom: 0.22em;
+
+.lxr-pin-row.is-active .lxr-pin-track {
+    border: 1px solid var(--lxr-blood-lit);
 }
- #modal div h2 {
-	 margin-top: 0;
-	 margin-bottom: 1.5em;
-	 font-size: 1.4em;
-}
- #modal div h3 {
-	 font-size: 1.1em;
-}
- #modal div h4 {
-	 font-size: 0.8em;
-}
- #modal #win {
-	 display: none;
-}
- #modal #lose {
-	 display: none;
-}
- 

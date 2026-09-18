@@ -1,147 +1,69 @@
---[[
-    ██╗     ██╗  ██╗██████╗        ██╗      ██████╗  ██████╗██╗  ██╗██████╗ ██╗ ██████╗██╗  ██╗
-    ██║     ╚██╗██╔╝██╔══██╗       ██║     ██╔═══██╗██╔════╝██║ ██╔╝██╔══██╗██║██╔════╝██║ ██╔╝
-    ██║      ╚███╔╝ ██████╔╝ ─────  ██║     ██║   ██║██║     █████╔╝ ██████╔╝██║██║     █████╔╝
-    ██║      ██╔██╗ ██╔══██╗       ██║     ██║   ██║██║     ██╔═██╗ ██╔═══╝ ██║██║     ██╔═██╗
-    ███████╗██╔╝ ██╗██║  ██║       ███████╗╚██████╔╝╚██████╗██║  ██╗██║     ██║╚██████╗██║  ██╗
-    ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝       ╚══════╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝╚═╝  ╚═╝
+--[[ ═══════════════════════════════════════════════════════════════════════════
+      LXR-LOCKPICK — Client (v3)
+      ═══════════════════════════════════════════════════════════════════════════
+      Listens for `lxr-lockpick:client:start(data)` from any resource
+      (typically lxr-doors). Opens the NUI, handles the result callback,
+      and reports back through the data.report event. Also exported as
+      Start(data) so other resources can call it directly.
 
-    🐺 LXR Lockpick — Client-Side Handler
-    Minigame lifecycle, NUI bridge, and framework-aware notifications.
+      © 2026 iBoss21 / LXRCore — All Rights Reserved
+      ═══════════════════════════════════════════════════════════════════════════ ]]
 
-    ═══════════════════════════════════════════════════════════════════════════════
-    SERVER INFORMATION
-    ═══════════════════════════════════════════════════════════════════════════════
-    Server:    The Land of Wolves 🐺
-    Developer: iBoss21 / The Lux Empire
-    Website:   https://www.wolves.land
-    Discord:   https://discord.gg/CrKcWdfd3A
-    Store:     https://theluxempire.tebex.io
-    ═══════════════════════════════════════════════════════════════════════════════
-    © 2026 iBoss21 / The Lux Empire | wolves.land | All Rights Reserved
-]]
+local running = false
+LXRCore = exports['lxr-core']:GetCoreObject()
 
--- ═══════════════════════════════════════════════════════════════════════════════
--- 🐺 FRAMEWORK BRIDGE — CLIENT SIDE
--- ═══════════════════════════════════════════════════════════════════════════════
+-- ████████████████████████████████████████████████████████████████████████████████
+-- ████████████████████████ EVENT: lxr-lockpick:client:start(data) ═══════════════
+-- ████████████████████████████████████████████████████████████████████████████████
+RegisterNetEvent('lxr-lockpick:client:start', function(data)
+    if running then return end
+    running = true
 
-local Framework     = nil
-local frameworkName = nil
-local lockpickCallback = nil
-local lockpicking      = false
-
-local function InitFramework()
-    if Config.Framework ~= 'auto' then
-        frameworkName = Config.Framework
-    elseif GetResourceState('lxr-core') == 'started' then
-        frameworkName = 'lxr-core'
-    elseif GetResourceState('rsg-core') == 'started' then
-        frameworkName = 'rsg-core'
-    elseif GetResourceState('vorp_core') == 'started' then
-        frameworkName = 'vorp_core'
-    elseif GetResourceState('redem_roleplay') == 'started' then
-        frameworkName = 'redem_roleplay'
-    elseif GetResourceState('qbr-core') == 'started' then
-        frameworkName = 'qbr-core'
-    elseif GetResourceState('qr-core') == 'started' then
-        frameworkName = 'qr-core'
-    else
-        frameworkName = 'standalone'
-    end
-
-    if frameworkName == 'lxr-core' then
-        Framework = exports['lxr-core']:GetCoreObject()
-    elseif frameworkName == 'rsg-core' then
-        Framework = exports['rsg-core']:GetCoreObject()
-    elseif frameworkName == 'vorp_core' then
-        Framework = exports['vorp_core']:GetCoreObject()
-    elseif frameworkName == 'qbr-core' then
-        Framework = exports['qbr-core']:GetCoreObject()
-    elseif frameworkName == 'qr-core' then
-        Framework = exports['qr-core']:GetCoreObject()
-    end
-end
-
--- ── Notification helper ───────────────────────────────────────────────────────
-
-local function Notify(msg, notifyType)
-    notifyType = notifyType or 'inform'
-
-    if frameworkName == 'lxr-core' or frameworkName == 'rsg-core' then
-        if lib and lib.notify then
-            lib.notify({ title = '🐺 Lockpick', description = msg, type = notifyType })
-        elseif Framework and Framework.Functions and Framework.Functions.Notify then
-            Framework.Functions.Notify(msg, notifyType)
-        end
-    elseif frameworkName == 'vorp_core' then
-        TriggerEvent('vorp:TipRight', msg, 4000)
-    elseif frameworkName == 'qbr-core' or frameworkName == 'qr-core' then
-        if Framework and Framework.Functions and Framework.Functions.Notify then
-            Framework.Functions.Notify(msg, notifyType)
-        end
-    else
-        -- standalone fallback
-        print(string.format('[lxr-lockpick] %s', msg))
-    end
-end
-
--- ═══════════════════════════════════════════════════════════════════════════════
--- 🐺 NUI HELPERS
--- ═══════════════════════════════════════════════════════════════════════════════
-
-local function openLockpick(bool)
-    SetNuiFocus(bool, bool)
+    SetNuiFocus(true, true)
     SendNUIMessage({
-        action = 'ui',
-        toggle = bool,
+        action  = 'open',
+        pins    = Config.Game.pins,
+        speed   = Config.Game.speed,
+        band    = Config.Game.band,
+        label   = data.label,
+        locale  = Lang.bundle(),
+        brand   = LXRCore.Brand,
+        lang    = Config.Lang,
     })
-    SetCursorLocation(0.5, 0.2)
-    lockpicking = bool
-end
-
--- ═══════════════════════════════════════════════════════════════════════════════
--- 🐺 CLIENT EVENTS
--- ═══════════════════════════════════════════════════════════════════════════════
-
--- Fired by the server after a successful item check.
-AddEventHandler('lxr-lockpick:client:openLockpick', function(callback)
-    lockpickCallback = callback
-    openLockpick(true)
 end)
 
--- Fired by the server to display a notification to the player.
-RegisterNetEvent('lxr-lockpick:client:notify', function(msg, notifyType)
-    Notify(msg, notifyType)
-end)
+-- ████████████████████████████████████████████████████████████████████████████████
+-- ████████████████████████ NUI CALLBACKS ════════════════════════════════════════
+-- ████████████████████████████████████████████████████████████████████████████████
+RegisterNUICallback('result', function(data, cb)
+    SetNuiFocus(false, false)
 
--- ═══════════════════════════════════════════════════════════════════════════════
--- 🐺 NUI CALLBACKS
--- ═══════════════════════════════════════════════════════════════════════════════
-
--- Called by the NUI when the minigame resolves (success or failure).
-RegisterNUICallback('callback', function(data, cb)
-    openLockpick(false)
-    -- Notify server of result so it can handle item removal / logging
-    TriggerServerEvent('lxr-lockpick:server:result', data.success, data.pinBroke or false)
-    if lockpickCallback then
-        lockpickCallback(data.success)
-        lockpickCallback = nil
+    if data.ok then
+        -- Successful pick: report to the triggering resource.
+        TriggerServerEvent(data.report, data.door, false)
+    elseif data.broke then
+        -- Pick snapped.
+        LXRCore.Notify(Lang:t('ui.broke'), 'error')
+        TriggerServerEvent(data.report, data.door, true)
+    else
+        -- Failed without breaking (shouldn't happen, but be safe).
+        LXRCore.Notify(Lang:t('ui.broke'), 'error')
     end
+
+    running = false
     cb('ok')
 end)
 
--- Called by the NUI when the player presses ESC to exit.
-RegisterNUICallback('exit', function(_, cb)
-    openLockpick(false)
+RegisterNUICallback('close', function(_, cb)
+    SetNuiFocus(false, false)
+    running = false
     cb('ok')
 end)
 
--- ═══════════════════════════════════════════════════════════════════════════════
--- 🐺 BOOT
--- ═══════════════════════════════════════════════════════════════════════════════
-
-AddEventHandler('onClientResourceStart', function(resource)
-    if resource == GetCurrentResourceName() then
-        InitFramework()
-    end
+-- ████████████████████████████████████████████████████████████████████████████████
+-- ████████████████████████ EXPORT: Start(data) ══════════════════════════════════
+-- ████████████████████████████████████████████████████████████████████████████████
+exports('Start', function(data)
+    if running then return end
+    TriggerEvent('lxr-lockpick:client:start', data)
 end)
