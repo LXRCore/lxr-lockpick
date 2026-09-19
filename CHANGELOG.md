@@ -9,3 +9,6 @@ Rebuilt on the LXRCore v3 API and the LXR UI Kit:
 * Config-driven pins, speed, band width, break chance, max tries.
 * Locales in `locales/en.lua` + `locales/ka.lua` with full parity.
 * Offline tests: config sanity + locale parity + mock output.
+
+## 3.0.0 — 2026-09-19
+* LXRCore v3 release line: every resource ships as 3.0.0 from here (the entries below are the road to it).
