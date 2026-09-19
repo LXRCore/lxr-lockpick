@@ -39,6 +39,7 @@
 
     // --- Open -----------------------------------------------------------
     function openGame(data) {
+        document.getElementById('panel').classList.remove('lxr-hidden');
         cfg = data;
         pinCount = data.pins || 4;
         gameDone = false;
@@ -211,7 +212,7 @@
         const door = cfg.door || null;
         const report = cfg.report || null;
 
-        fetch('https://' + GetCurrentResourceName() + '/result', {
+        document.getElementById('panel').classList.add('lxr-hidden'); fetch('https://' + GetCurrentResourceName() + '/result', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ok: ok, broke: broke, door: door, report: report }),
@@ -221,6 +222,7 @@
     // --- Close ----------------------------------------------------------
     function closeGame() {
         gameDone = true;
+        document.getElementById('panel').classList.add('lxr-hidden');
         if (animFrame) cancelAnimationFrame(animFrame);
         fetch('https://' + GetCurrentResourceName() + '/close', { method: 'POST' });
     }
